@@ -1,6 +1,6 @@
 # Project Title
 
-A CRUD application for managing user data with an added login feature. The project ensures secure password storage using the bcrypt module. It demonstrates the implementation of essential operations like Create, Read, Update, and Delete, along with user authentication.
+A CRUD application for managing user data with an added login feature. The project ensures secure password storage using the bcrypt module. It demonstrates the implementation of essential operations like Create, Read, Update, and Delete.
 ## Run and Test Instructions
 
 ### Running the Application
