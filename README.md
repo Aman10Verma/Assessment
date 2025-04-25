@@ -4,19 +4,21 @@ A CRUD application for managing user data with an added login feature. The proje
 ## Run and Test Instructions
 
 ### Running the Application
-1. Clone the repository to your local machine:
+1. Add your MongoDB url in dbConfig.js file.
+
+2. Clone the repository to your local machine:
     ```bash
     git clone <repository-url>
     ```
-2. Navigate to the project directory:
+3. Navigate to the project directory:
     ```bash
     cd <project-directory>
     ```
-3. Install the required dependencies:
+4. Install the required dependencies:
     ```bash
     npm install
     ```
-4. Start the application:
+5. Start the application:
     ```bash
     npm start
     ```
