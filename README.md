@@ -1,24 +1,22 @@
 # Project Title
 
-A CRUD application for managing user data with an added login feature. The project ensures secure password storage using the bcrypt module. It demonstrates the implementation of essential operations like Create, Read, Update, and Delete.
+A CRUD application for managing user data with an added login feature. The project ensures secure password storage using the bcrypt module. It demonstrates the implementation of essential operations like Create, Read, Update, and Delete, along with user authentication.
 ## Run and Test Instructions
 
 ### Running the Application
-1. Add your MongoDB url in dbConfig.js file.
-
-2. Clone the repository to your local machine:
+1. Clone the repository to your local machine:
     ```bash
     git clone <repository-url>
     ```
-3. Navigate to the project directory:
+2. Navigate to the project directory:
     ```bash
     cd <project-directory>
     ```
-4. Install the required dependencies:
+3. Install the required dependencies:
     ```bash
     npm install
     ```
-5. Start the application:
+4. Start the application:
     ```bash
     npm start
     ```

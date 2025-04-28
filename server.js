@@ -1,191 +1,125 @@
 const express = require("express");
-const connectDB = require("./config/dbConfig")
-const User = require("./model/user.model")
-const cors = require("cors")
-const bcrypt = require("bcrypt")
-const dotenv = require("dotenv")
-dotenv.config()
+const bcrypt = require("bcrypt");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const { connectDB } = require("./config/dbConfig");
+const User = require("./model/user.model");
+
+dotenv.config();
 const app = express();
-connectDB()
-app.use(cors())
-//  This middleware parses incoming requests with JSON payloads an
-app.use(express.json())
+
+// Middleware
+app.use(cors());
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//get all user
-app.get("/",async(req,res)=>{
+// Connect to the database
+connectDB();
+
+// Sync database models
+(async () => {
     try {
-        const users = await User.find()
-    if(users){
-        res.status(200).json({
-            success:true,
-            users,
-        })
-    }
+        await User.sync(); // Use { force: true } for development to reset the table
+        console.log("Database synchronized");
     } catch (error) {
-        res.status(500).json({
-            success:false,
-            message:error.message,
-        })
-        
+        console.error("Error synchronizing database:", error);
     }
-})
-app.post("/user",async(req,res)=>{
+})();
+
+// Routes
+
+// Get all users
+app.get("/", async (req, res) => {
     try {
-        const {name,email,password}=req.body;
-
-    if(!name || !email || !password){
-        res.status(400).json({
-            success:false,
-            message:"All feilds are requierd",
-        })
-    }
-
-    const existingUser = await User.findOne({email})
-    if(existingUser){
-        res.status(400).json({
-            success:false,
-            message:"User already exists",
-        })
-    }
-    hashedPassword = await bcrypt.hash(password,10)
-    const user = await User.create({
-        name,
-        email,
-        password:hashedPassword,
-    })
-    if(user){
-        res.status(201).json({
-            success:true,
-            user,
-        })  
-    }
+        const users = await User.findAll();
+        res.status(200).json({ success: true, users });
     } catch (error) {
-        res.status(500).json({
-            success:false,
-            message:error.message,
-        })
+        res.status(500).json({ success: false, message: error.message });
     }
-})
+});
 
-//login user
-app.post("/login",async(req,res)=>{
+// Add a new user
+app.post("/user", async (req, res) => {
     try {
-        const {email,password} = req.body;
-        if(!email || !password){
-            res.status(400).json({
-                success:false,
-                message:"All feilds are requierd",
-            })
-        }
-        const user = await User.findOne({email})
-        if(!user){
-            res.status(400).json({
-                success:false,
-                message:"User not found",
-            })
-        }
-        const isMatch = await bcrypt.compare(password,user.password)
-        if(!isMatch){
-            res.status(400).json({
-                success:false,
-                message:"Invalid credentials",
-            })
-        }
-        res.status(200).json({
-            success:true,
-            user,
-        })
-    } catch (error) {
-        res.status(500).json({
-            success:false,
-            message:error.message,
-        })
-    }
-})
+        const { name, email, password } = req.body;
 
-//get user by id
-app.get("/user/:id",async(req,res)=>{
+        if (!name || !email || !password) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
+        }
+
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: "User already exists" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await User.create({ name, email, password: hashedPassword });
+        res.status(201).json({ success: true, user });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Get user by ID
+app.get("/user/:id", async (req, res) => {
     try {
-        const {id} = req.params;
-        const user = await User.findById(id)
+        const { id } = req.params;
+        const user = await User.findByPk(id);
 
-        if(user){
-            res.status(200).json({
-                success:true,
-                user,
-            })
-        }else{
-            res.status(404).json({
-                success:false,
-                message:"User not found",
-            })
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
         }
+
+        res.status(200).json({ success: true, user });
     } catch (error) {
-        res.status(500).json({
-            success:false,
-            message:error.message,
-        })
+        res.status(500).json({ success: false, message: error.message });
     }
-})
-//update user by id
-app.put("/user/:id",async(req,res)=>{
+});
+
+// Update user by ID
+app.put("/user/:id", async (req, res) => {
     try {
-        const {id} = req.params;
-         //A library to help you hash passwords.
-        const hashedPassword = await bcrypt.hash(req.body.password,10)
-        const user = await User.findByIdAndUpdate(id,{
-            email:req.body.email,
-            name:req.body.name,
-            password:hashedPassword,
-        },{new:true})
-        if(user){
-            res.status(200).json({
-                success:true,
-                user,
-            })
-        }
-        else{
-            res.status(404).json({
-                success:false,
-                message:"User not found",
-            })
-        }
-    } catch (error) {
-        res.status(500).json({
-            success:false,
-            message:error.message,
-        })
-    }
-}
-)
+        const { id } = req.params;
+        const { name, email, password } = req.body;
 
-//delete user by id
-app.delete("/user/:id",async(req,res)=>{
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        const updates = { name, email };
+        if (password) {
+            updates.password = await bcrypt.hash(password, 10);
+        }
+
+        await user.update(updates);
+        res.status(200).json({ success: true, user });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Delete user by ID
+app.delete("/user/:id", async (req, res) => {
     try {
-        const {id} = req.params;
-        const user = await User.findByIdAndDelete(id)
-        if(user){
-            res.status(200).json({
-                success:true,
-                message:"User deleted successfully",
-            })
-        }else{
-            res.status(404).json({
-                success:false,
-                message:"User not found",
-            })
+        const { id } = req.params;
+        const user = await User.findByPk(id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
         }
+
+        await user.destroy();
+        res.status(200).json({ success: true, message: "User deleted successfully" });
     } catch (error) {
-        res.status(500).json({
-            success:false,
-            message:error.message,
-        })
+        res.status(500).json({ success: false, message: error.message });
     }
-})
+});
 
-app.listen(process.env.PORT,()=>{
-    console.log(`server is running on http://locahost:${process.env.PORT}`)
-})
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
 
-module.exports = app
+module.exports = app;
